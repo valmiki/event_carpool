@@ -1,0 +1,363 @@
+### Updated Plugin Structure for Elgg 6.2.3
+The updated `event_carpool` plugin structure for Elgg 6.2.3 is as follows:
+```
+mod/event_carpool/
+├── classes/
+│   └── EventCarpool/
+│       └── Bootstrap.php
+├── elgg-plugin.php
+├── languages/
+│   └── en.php
+│   └── nl.php
+├── views/
+│   └── default/
+│       ├── event_carpool/
+│       │   ├── offers.js
+│       │   ├── offers.php
+│       │   └── requests.php
+│       └── object/
+│           ├── carpool_offer.php
+│           └── carpool_request.php
+├── forms/
+│   └── event_carpool/
+│       ├── add_offer.php
+│       ├── add_request.php
+│       └── send_feedback.php
+└── actions/
+    └── event_carpool/
+        ├── add_offer.php
+        ├── add_request.php
+        ├── close_offer.php
+        ├── delete_offer.php
+        └── send_feedback.php
+```
+
+### 1. Plugin Metadata (`elgg-plugin.php`)
+This file defines the plugin’s metadata and specifies the bootstrap class, replacing the deprecated `start.php`.
+
+```php
+return [
+    'name' => 'Event Carpool',
+    'author' => 'Your Name',
+    'version' => '1.0',
+    'description' => 'Adds carpool functionality to the Event Manager plugin',
+    'requires' => [
+        'event_manager' => '1.0',
+    ],
+    'bootstrap' => \EventCarpool\Bootstrap::class,
+];
+```
+
+### 2. Bootstrap Class (`classes/EventCarpool/Bootstrap.php`)
+The bootstrap class handles plugin initialization, registering entity types, extending views, and registering actions.
+
+```php
+namespace EventCarpool;
+
+use Elgg\PluginBootstrap;
+
+class Bootstrap extends PluginBootstrap {
+
+    public function init() {
+        // Register entity types
+        elgg_register_entity_type('object', 'carpool_offer');
+        elgg_register_entity_type('object', 'carpool_request');
+
+        // Extend views
+        elgg_extend_view('event_manager/event/view', 'event_carpool/offers');
+        elgg_extend_view('event_manager/event/view', 'event_carpool/requests');
+
+        // Register actions
+        $plugin_path = $this->plugin()->getPath();
+        elgg_register_action('event_carpool/add_offer', $plugin_path . 'actions/event_carpool/add_offer.php');
+        elgg_register_action('event_carpool/add_request', $plugin_path . 'actions/event_carpool/add_request.php');
+    }
+}
+```
+
+### 3. Language Strings (`languages/en.php`)
+Defines user-facing text for the plugin.
+
+```php
+<?php
+return [
+    'event_carpool:offers' => 'Carpool Offers',
+    'event_carpool:requests' => 'Carpool Requests',
+    'event_carpool:no_offers' => 'No carpool offers yet.',
+    'event_carpool:no_requests' => 'No carpool requests yet.',
+    'event_carpool:seats' => 'Number of seats: %s',
+    'event_carpool:pickup_points' => 'Possible pickup points: %s',
+    'event_carpool:offer_title' => 'Carpool offer for %s',
+    'event_carpool:request_title' => 'Carpool request for %s',
+    'event_carpool:offer_saved' => 'Your carpool offer has been saved.',
+    'event_carpool:request_saved' => 'Your carpool request has been saved.',
+    'event_carpool:error:save' => 'There was an error saving your carpool offer/request.',
+    'event_carpool:by' => 'Offered by %s',
+    'event_carpool:requested_by' => 'Requested by %s',
+    'event_carpool:invalid_event' => 'Invalid event selected.',
+];
+```
+
+### 4. Views for Offers (`views/default/event_carpool/offers.php`)
+Displays carpool offers and a form to submit new ones.
+
+```php
+<?php
+$event = elgg_get_page_owner_entity();
+if ($event && $event->getSubtype() === 'event') {
+    echo '<h3>' . elgg_echo('event_carpool:offers') . '</h3>';
+    $offers = elgg_get_entities_from_relationship([
+        'relationship' => 'for_event',
+        'relationship_guid' => $event->guid,
+        'inverse_relationship' => false,
+        'type' => 'object',
+        'subtype' => 'carpool_offer',
+    ]);
+
+    if ($offers) {
+        foreach ($offers as $offer) {
+            echo elgg_view_entity($offer, ['full_view' => false]);
+        }
+    } else {
+        echo '<p>' . elgg_echo('event_carpool:no_offers') . '</p>';
+    }
+
+    // Form to add a new offer
+    echo elgg_view_form('event_carpool/add_offer', [], ['event_guid' => $event->guid]);
+}
+```
+
+### 5. Views for Requests (`views/default/event_carpool/requests.php`)
+Displays carpool requests and a form to submit new ones.
+
+```php
+<?php
+$event = elgg_get_page_owner_entity();
+if ($event && $event->getSubtype() === 'event') {
+    echo '<h3>' . elgg_echo('event_carpool:requests') . '</h3>';
+    $requests = elgg_get_entities_from_relationship([
+        'relationship' => 'for_event',
+        'relationship_guid' => $event->guid,
+        'inverse_relationship' => false,
+        'type' => 'object',
+        'subtype' => 'carpool_request',
+    ]);
+
+    if ($requests) {
+        foreach ($requests as $request) {
+            echo elgg_view_entity($request, ['full_view' => false]);
+        }
+    } else {
+        echo '<p>' . elgg_echo('event_carpool:no_requests') . '</p>';
+    }
+
+    // Form to add a new request
+    echo elgg_view_form('event_carpool/add_request', [], ['event_guid' => $event->guid]);
+}
+```
+
+### 6. Forms for Offers (`forms/event_carpool/add_offer.php`)
+Form for submitting a carpool offer.
+
+```php
+<?php
+echo elgg_view_field([
+    '#type' => 'hidden',
+    'name' => 'event_guid',
+    'value' => elgg_extract('event_guid', $vars),
+]);
+
+echo elgg_view_field([
+    '#type' => 'number',
+    '#label' => elgg_echo('event_carpool:seats'),
+    'name' => 'seats',
+    'required' => true,
+    'min' => 1,
+]);
+
+echo elgg_view_field([
+    '#type' => 'longtext',
+    '#label' => elgg_echo('event_carpool:pickup_points'),
+    'name' => 'pickup_points',
+    'required' => true,
+]);
+
+echo elgg_view_field([
+    '#type' => 'submit',
+    'value' => elgg_echo('save'),
+]);
+```
+
+### 7. Forms for Requests (`forms/event_carpool/add_request.php`)
+Form for submitting a carpool request.
+
+```php
+<?php
+echo elgg_view_field([
+    '#type' => 'hidden',
+    'name' => 'event_guid',
+    'value' => elgg_extract('event_guid', $vars),
+]);
+
+echo elgg_view_field([
+    '#type' => 'number',
+    '#label' => elgg_echo('event_carpool:seats'),
+    'name' => 'seats',
+    'required' => true,
+    'min' => 1,
+]);
+
+echo elgg_view_field([
+    '#type' => 'longtext',
+    '#label' => elgg_echo('event_carpool:pickup_points'),
+    'name' => 'pickup_points',
+    'required' => true,
+]);
+
+echo elgg_view_field([
+    '#type' => 'submit',
+    'value' => elgg_echo('save'),
+]);
+```
+
+### 8. Actions for Offers (`actions/event_carpool/add_offer.php`)
+Handles the submission of a carpool offer.
+
+```php
+<?php
+elgg_gatekeeper();
+
+$event_guid = (int) get_input('event_guid');
+$event = get_entity($event_guid);
+
+if (!$event || $event->getSubtype() !== 'event') {
+    register_error(elgg_echo('event_carpool:invalid_event'));
+    forward(REFERRER);
+}
+
+$seats = (int) get_input('seats');
+$pickup_points = get_input('pickup_points');
+
+if ($seats < 1 || empty($pickup_points)) {
+    register_error(elgg_echo('event_carpool:error:save'));
+    forward(REFERRER);
+}
+
+$offer = new ElggObject();
+$offer->subtype = 'carpool_offer';
+$offer->owner_guid = elgg_get_logged_in_user_guid();
+$offer->container_guid = $event->guid;
+$offer->access_id = $event->access_id;
+$offer->title = elgg_echo('event_carpool:offer_title', [$event->title]);
+$offer->description = $pickup_points;
+$offer->seats = $seats;
+
+if ($offer->save()) {
+    add_entity_relationship($offer->guid, 'for_event', $event->guid);
+    system_message(elgg_echo('event_carpool:offer_saved'));
+} else {
+    register_error(elgg_echo('event_carpool:error:save'));
+}
+
+forward($event->getURL());
+```
+
+### 9. Actions for Requests (`actions/event_carpool/add_request.php`)
+Handles the submission of a carpool request.
+
+```php
+<?php
+elgg_gatekeeper();
+
+$event_guid = (int) get_input('event_guid');
+$event = get_entity($event_guid);
+
+if (!$event || $event->getSubtype() !== 'event') {
+    register_error(elgg_echo('event_carpool:invalid_event'));
+    forward(REFERRER);
+}
+
+$seats = (int) get_input('seats');
+$pickup_points = get_input('pickup_points');
+
+if ($seats < 1 || empty($pickupస
+$request = new ElggObject();
+$request->subtype = 'carpool_request';
+$request->owner_guid = elgg_get_logged_in_user_guid();
+$request->container_guid = $event->guid;
+$request->access_id = $event->access_id;
+$request->title = elgg_echo('event_carpool:request_title', [$event->title]);
+$request->description = $pickup_points;
+$request->seats = $seats;
+
+if ($request->save()) {
+    add_entity_relationship($request->guid, 'for_event', $event->guid);
+    system_message(elgg_echo('event_carpool:request_saved'));
+} else {
+    register_error(elgg_echo('event_carpool:error:save'));
+}
+
+forward($event->getURL());
+```
+
+### 10. Entity View for Offers (`views/default/object/carpool_offer.php`)
+Defines how a carpool offer is displayed.
+
+```php
+<?php
+$offer = elgg_extract('entity', $vars);
+echo '<div class="elgg-listing">';
+echo '<p>' . elgg_echo('event_carpool:by', [$offer->getOwnerEntity()->getDisplayName()]) . '</p>';
+echo '<p>' . elgg_echo('event_carpool:seats', [$offer->seats]) . '</p>';
+echo '<p>' . elgg_echo('event_carpool:pickup_points', [$offer->description]) . '</p>';
+echo '</div>';
+```
+
+### 11. Entity View for Requests (`views/default/object/carpool_request.php`)
+Defines how a carpool request is displayed.
+
+```php
+<?php
+$request = elgg_extract('entity', $vars);
+echo '<div class="elgg-listing">';
+echo '<p>' . elgg_echo('event_carpool:requested_by', [$request->getOwnerEntity()->getDisplayName()]) . '</p>';
+echo '<p>' . elgg_echo('event_carpool:seats', [$request->seats]) . '</p>';
+echo '<p>' . elgg_echo('event_carpool:pickup_points', [$request->description]) . '</p>';
+echo '</div>';
+```
+
+### Installation and Testing
+1. Place the `event_carpool` directory in the `mod/` directory of your Elgg installation.
+2. Ensure the Event Manager plugin ([https://github.com/ColdTrick/event_manager](https://github.com/ColdTrick/event_manager)) is installed and enabled.
+3. Enable the `event_carpool` plugin via the Elgg admin panel.
+4. Test the plugin by navigating to an event page, submitting carpool offers and requests, and verifying they display correctly.
+
+### Compatibility Notes
+- The plugin uses standard Elgg functions (`elgg_register_entity_type()`, `elgg_extend_view()`, `elgg_register_action()`) that are compatible with Elgg 6.2.3, based on available documentation ([http://learn.elgg.org/en/stable/guides/plugins.html](http://learn.elgg.org/en/stable/guides/plugins.html)).
+- The plugin assumes the Event Manager plugin uses the `event_manager/event/view` view, which should be verified against the latest version of the Event Manager plugin.
+- Manual matching is implemented; automated matching would require additional logic, such as geolocation integration, which is not included here.
+
+### Table: Plugin Components
+| Component | File Path | Purpose |
+|-----------|-----------|---------|
+| Plugin Metadata | `elgg-plugin.php` | Defines plugin metadata and bootstrap class |
+| Bootstrap Class | `classes/EventCarpool/Bootstrap.php` | Initializes plugin, registers entities, views, and actions |
+| Language Strings | `languages/en.php` | Defines user-facing text |
+| Offer View | `views/default/event_carpool/offers.php` | Displays carpool offers and submission form |
+| Request View | `views/default/event_carpool/requests.php` | Displays carpool requests and submission form |
+| Offer Form | `forms/event_carpool/add_offer.php` | Form for submitting carpool offers |
+| Request Form | `forms/event_carpool/add_request.php` | Form for submitting carpool requests |
+| Offer Action | `actions/event_carpool/add_offer.php` | Handles offer submission and saves entity |
+| Request Action | `actions/event_carpool/add_request.php` | Handles request submission and saves entity |
+| Offer Entity View | `views/default/object/carpool_offer.php` | Renders individual carpool offer display |
+| Request Entity View | `views/default/object/carpool_request.php` | Renders individual carpool request display |
+
+### Future Enhancements
+- **Automated Matching**: Implement logic to match offers and requests based on pickup points or geolocation data.
+- **Structured Pickup Points**: Replace text-based pickup points with a structured format (e.g., coordinates or predefined locations).
+- **Notifications**: Add notifications to alert users when new offers or requests are posted for an event.
+
+### Citations
+- [Elgg Plugin Guide](http://learn.elgg.org/en/stable/guides/plugins.html)
+- [Elgg Plugin Bootstrap](http://learn.elgg.org/en/stable/guides/plugins/bootstrap.html)
+- [Event Manager Plugin](https://github.com/ColdTrick/event_manager)

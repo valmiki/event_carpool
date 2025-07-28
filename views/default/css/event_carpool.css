@@ -1,0 +1,46 @@
+.carpool-offer-details {
+    display: none;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-top: 5px;
+}
+.carpool-offer-actions {
+    margin-top: 10px;
+}
+.carpool-offer-toggle-active {
+    font-weight: bold;
+}
+.carpool-offer-toggle {
+    cursor: pointer;
+    color: #0054a7;
+}
+.carpool-offer {
+    margin-bottom: 10px;
+}
+.carpool-add-offer-form {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+}
+
+.carpool-offer-form-wrapper, .carpool-request-form-wrapper {
+    margin-top: 20px;
+}
+
+#carpool-add-offer-form, #carpool-add-request-form {
+    display: block;
+    margin-bottom: 20px;
+}
+
+.carpool-offer {
+    margin-bottom: 15px;
+}
+
+.carpool-offer-details {
+    padding-left: 20px;
+}
+
+.carpool-offer-actions {
+    margin-top: 10px;
+}

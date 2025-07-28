@@ -1,0 +1,24 @@
+{
+    "name": "your-vendor/event_carpool",
+    "type": "elgg-plugin",
+    "description": "Adds carpool functionality to the Event Manager plugin for Elgg",
+    "version": "1.0.0",
+    "keywords": ["elgg", "plugin", "carpool", "event"],
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "JanS",
+            "email": "post@janstorms.org"
+        }
+    ],
+    "require": {
+        "composer/installers": "^1.0 || ^2.0",
+        "elgg/elgg": "^6.2",
+        "coldtrick/event_manager": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "EventCarpool\\": "classes/EventCarpool/"
+        }
+    }
+}
