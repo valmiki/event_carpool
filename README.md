@@ -1,4 +1,7 @@
 # Event Carpool
+![Elgg](https://img.shields.io/badge/Elgg-6.3%20%7C%207.0-green)
+![Stable](https://img.shields.io/badge/stable-v2.1.0-blue)
+![License](https://img.shields.io/badge/license-GPL--2.0--only-lightgrey)
 
 An [Elgg](https://elgg.org) plugin that adds carpooling to events managed by the
 [ColdTrick Event Manager](https://github.com/ColdTrick/event_manager) plugin.
