@@ -33,3 +33,7 @@
 - [Elgg Plugin Guide](http://learn.elgg.org/en/stable/guides/plugins.html)
 - [Elgg Plugin Bootstrap](http://learn.elgg.org/en/stable/guides/plugins/bootstrap.html)
 - [Event Manager Plugin](https://github.com/ColdTrick/event_manager)
+Future ideas (not yet implemented):
+- Besides sending an e-mail, also deliver the "respond" message to the
+  recipient's internal forum inbox (Elgg messages plugin), so a reply
+  reaches them inside the site as well as by e-mail.

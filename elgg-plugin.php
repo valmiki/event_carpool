@@ -1,4 +1,14 @@
 <?php
+/**
+ * Fixes vs. the original:
+ *  - Actions registered ONCE here (Bootstrap no longer also registers
+ *    them), matching the action files on disk incl. send_feedback.
+ *  - Dead `javascript` block removed (it pointed at non-existent paths).
+ *  - `entities` registration added: Elgg 7 made ElggObject abstract, so
+ *    each object subtype needs a concrete class. This maps the carpool
+ *    subtypes to EventCarpool\Offer / EventCarpool\Request so they can
+ *    be both created and loaded.
+ */
 return [
     'plugin' => [
         'name' => 'Event Carpool',
@@ -9,35 +19,31 @@ return [
             ],
         ],
     ],
-    'javascript' => [
-        'event_carpool/offers' => 'mod/event_carpool/views/default/js/event_carpool/offers.mjs',
-    ],
+
     'bootstrap' => \EventCarpool\Bootstrap::class,
-    'hooks' => [
-        'view_vars' => [
-            'event_manager/event/view/location' => [
-                'EventCarpool\Bootstrap::prepareCarpoolVars' => [],
-            ],
+
+    'entities' => [
+        [
+            'type'    => 'object',
+            'subtype' => 'event_carpool_offer',
+            'class'   => \EventCarpool\Offer::class,
+        ],
+        [
+            'type'    => 'object',
+            'subtype' => 'event_carpool_request',
+            'class'   => \EventCarpool\Request::class,
         ],
     ],
+
     'actions' => [
-        'event_carpool/add_offer' => [
-            'access' => 'logged_in',
-        ],
-        'event_carpool/add_request' => [
-            'access' => 'logged_in',
-        ],
-        'event_carpool/close_offer' => [
-            'access' => 'logged_in',
-        ],
-        'event_carpool/delete_offer' => [
-            'access' => 'logged_in',
-        ],
-    ],
-    'view_extensions' => [
-        'event_manager/event/view/location' => [
-            'event_carpool/offers' => ['priority' => 500],
-            'event_carpool/requests' => ['priority' => 501],
-        ],
+        'event_carpool/add_offer'     => ['access' => 'logged_in'],
+        'event_carpool/edit_offer'    => ['access' => 'logged_in'],
+        'event_carpool/close_offer'   => ['access' => 'logged_in'],
+        'event_carpool/delete_offer'  => ['access' => 'logged_in'],
+        'event_carpool/add_request'   => ['access' => 'logged_in'],
+        'event_carpool/edit_request'  => ['access' => 'logged_in'],
+        'event_carpool/close_request' => ['access' => 'logged_in'],
+        'event_carpool/delete_request' => ['access' => 'logged_in'],
+        'event_carpool/send_feedback' => ['access' => 'logged_in'],
     ],
 ];

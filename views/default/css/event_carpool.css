@@ -1,46 +1,141 @@
-.carpool-offer-details {
-    display: none;
+/* Algemene layout voor carpool-items */
+.carpool-offer,
+.carpool-request {
+    margin-bottom: 15px;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
+    background-color: #fdfdfd;
+    border-radius: 4px;
+}
+
+/* Uitklapbare details (aanvankelijk verborgen) */
+.carpool-offer-details,
+.carpool-request-details {
+    display: none;
+    padding: 10px 10px 10px 20px;
+    border-left: 3px solid #ccc;
     margin-top: 5px;
+    background-color: #f9f9f9;
 }
-.carpool-offer-actions {
-    margin-top: 10px;
-}
-.carpool-offer-toggle-active {
-    font-weight: bold;
-}
-.carpool-offer-toggle {
+
+/* Toggle-elementen */
+.carpool-offer-toggle,
+.carpool-request-toggle {
     cursor: pointer;
     color: #0054a7;
+    text-decoration: underline;
 }
-.carpool-offer {
-    margin-bottom: 10px;
+
+.carpool-offer-toggle-active,
+.carpool-request-toggle-active {
+    font-weight: bold;
 }
-.carpool-add-offer-form {
+
+/* Formuliercontainers */
+.carpool-offer-form-wrapper,
+.carpool-request-form-wrapper {
     margin-top: 20px;
+}
+
+#carpool-add-offer-form,
+#carpool-add-request-form {
+    display: block;
+    margin-bottom: 20px;
     padding: 10px;
     border: 1px solid #ddd;
     background: #f9f9f9;
+    border-radius: 4px;
 }
 
-.carpool-offer-form-wrapper, .carpool-request-form-wrapper {
-    margin-top: 20px;
+.carpool-offer-feedback-form {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed #ccc;
 }
 
-#carpool-add-offer-form, #carpool-add-request-form {
-    display: block;
-    margin-bottom: 20px;
+.carpool-request-feedback-form {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed #ccc;
 }
 
-.carpool-offer {
-    margin-bottom: 15px;
-}
-
-.carpool-offer-details {
-    padding-left: 20px;
-}
-
-.carpool-offer-actions {
+/* Actieknoppen onder items */
+.carpool-offer-actions,
+.carpool-request-actions {
     margin-top: 10px;
+}
+
+/* Container voor de details en profielfoto */
+.carpool-item .carpool-details-wrapper {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  /*border-top: 1px solid #ccc;*/
+}
+
+/* Linkerzijde: de carpool-details */
+.carpool-details-wrapper .carpool-details {
+  flex: 1 1 70%;
+}
+
+/* Rechterzijde: de profielfoto en naam */
+.carpool-details-wrapper .carpool-owner {
+  flex: 0 0 25%;
+  text-align: center;
+}
+
+.carpool-owner img {
+  max-width: 100px;
+  border-radius: 50%;
+  display: block;
+  margin: 0 auto 0.5rem auto;
+}
+
+.carpool-owner-name {
+  font-weight: bold;
+  margin-top: 0.5rem;
+  display: block;
+}
+
+/* Knoppen onderaan details */
+.carpool-item-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+/* --- Closed state --- */
+.carpool-item-closed .carpool-offer-toggle,
+.carpool-item-closed .carpool-request-toggle {
+	opacity: 0.6;
+}
+
+.carpool-badge-closed {
+	display: inline-block;
+	margin-left: 0.5rem;
+	padding: 0.05rem 0.5rem;
+	font-size: 0.75em;
+	font-weight: bold;
+	text-transform: uppercase;
+	color: #fff;
+	background-color: #999;
+	border-radius: 0.75rem;
+	vertical-align: middle;
+}
+
+/* --- Respond / contact form --- */
+.carpool-contact-form {
+	margin-top: 15px;
+	padding-top: 10px;
+	border-top: 1px dashed #ccc;
+}
+
+.carpool-contact-form h5 {
+	margin: 0 0 0.5rem 0;
+}
+
+/* --- Add forms (module boxes) get a little breathing room --- */
+.event-carpool-add-offer,
+.event-carpool-add-request {
+	margin-bottom: 1rem;
 }

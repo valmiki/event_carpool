@@ -1,12 +1,11 @@
 <?php
 
-$event_guid = elgg_extract('event_guid', $vars);
+$event_guid = (int) elgg_extract('event_guid', $vars);
 if (!$event_guid) {
     return;
 }
 
-echo elgg_view_field([
-    '#type' => 'hidden',
+echo elgg_view('input/hidden', [
     'name' => 'event_guid',
     'value' => $event_guid,
 ]);
@@ -27,13 +26,15 @@ echo elgg_view_field([
 ]);
 
 echo elgg_view_field([
-    '#type' => 'textarea',
+    '#type' => 'plaintext', // tijdelijk als fallback
     '#label' => elgg_echo('event_carpool:notes'),
     'name' => 'notes',
+    'rows' => 4,
 ]);
 
-echo elgg_view_field([
-    '#type' => 'submit',
-    '#text' => elgg_echo('event_carpool:add_offer'),
-    'value' => 'submit',
+echo elgg_view('input/submit', [
+    'text' => elgg_echo('event_carpool:add_offer'),
+    'value' => elgg_echo('event_carpool:add_offer'),
+    'title' => elgg_echo('event_carpool:add_offer'),
+    'aria-label' => elgg_echo('event_carpool:add_offer'),
 ]);

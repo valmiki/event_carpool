@@ -1,33 +1,53 @@
 <?php
+/**
+ * Sends a message from the current user to the owner of a carpool offer
+ * OR request ("respond" / contact the driver or requester).
+ */
+
 use Psr\Log\LogLevel;
 
-$offer_guid = (int) get_input('offer_guid');
-$owner_guid = (int) get_input('owner_guid');
-$message = get_input('message');
-$sender_guid = elgg_get_logged_in_user_guid();
+elgg_gatekeeper();
 
-if (!$offer_guid || !$owner_guid || !$sender_guid || empty($message)) {
-    \elgg_log('Event Carpool: Ongeldige feedback-invoer', LogLevel::ERROR);
-    return elgg_error_response(elgg_echo('event_carpool:feedback:invalid_input'));
+$entity_guid = (int) get_input('entity_guid');
+$message     = trim((string) get_input('message'));
+$sender      = elgg_get_logged_in_user_entity();
+
+if (!$entity_guid || !$sender || $message === '') {
+	return elgg_error_response(elgg_echo('event_carpool:feedback:invalid_input'));
 }
 
-$offer = get_entity($offer_guid);
-if (!$offer || $offer->getSubtype() !== 'carpool_offer' || $offer->owner_guid !== $owner_guid) {
-    \elgg_log('Event Carpool: Ongeldige aanbieding, GUID: ' . $offer_guid, LogLevel::ERROR);
-    return elgg_error_response(elgg_echo('event_carpool:feedback:invalid_offer'));
+$entity = get_entity($entity_guid);
+$valid  = ['event_carpool_offer', 'event_carpool_request'];
+if (!$entity instanceof \ElggObject || !in_array($entity->getSubtype(), $valid, true)) {
+	return elgg_error_response(elgg_echo('event_carpool:feedback:invalid_offer'));
 }
 
-$owner = get_entity($owner_guid);
-if (!$owner || !$owner instanceof \ElggUser) {
-    \elgg_log('Event Carpool: Ongeldige eigenaar, GUID: ' . $owner_guid, LogLevel::ERROR);
-    return elgg_error_response(elgg_echo('event_carpool:feedback:invalid_owner'));
+$recipient = $entity->getOwnerEntity();
+if (!$recipient instanceof \ElggUser) {
+	return elgg_error_response(elgg_echo('event_carpool:feedback:invalid_owner'));
 }
 
-$result = elgg_send_message($sender_guid, $owner_guid, elgg_echo('event_carpool:feedback:subject', [$offer_guid]), $message);
-if (!$result) {
-    \elgg_log('Event Carpool: Feedback verzenden mislukt, GUID: ' . $offer_guid, LogLevel::ERROR);
-    return elgg_error_response(elgg_echo('event_carpool:feedback:send_failed'));
+if ($recipient->guid === $sender->guid) {
+	return elgg_error_response(elgg_echo('event_carpool:feedback:invalid_input'));
 }
 
-\elgg_log('Event Carpool: Feedback verzonden, GUID: ' . $offer_guid, LogLevel::NOTICE);
-return elgg_ok_response('', elgg_echo('event_carpool:feedback:sent'), null);
+$subject = elgg_echo('event_carpool:feedback:subject', [$sender->getDisplayName()]);
+$body = elgg_echo('event_carpool:feedback:body', [
+	$recipient->getDisplayName(),
+	$sender->getDisplayName(),
+	$message,
+]);
+
+$email = \Elgg\Email::factory([
+	'from'    => $sender,
+	'to'      => $recipient,
+	'subject' => $subject,
+	'body'    => $body,
+]);
+
+if (!elgg_send_email($email)) {
+	elgg_log("Event Carpool: contact email failed for entity #{$entity_guid}", LogLevel::ERROR);
+	return elgg_error_response(elgg_echo('event_carpool:feedback:send_failed'));
+}
+
+return elgg_ok_response('', elgg_echo('event_carpool:feedback:sent'));

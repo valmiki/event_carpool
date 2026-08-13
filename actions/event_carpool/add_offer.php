@@ -1,44 +1,50 @@
 <?php
-use Psr\Log\LogLevel;
+/**
+ * Create a carpool offer. Any logged-in user who can access the event
+ * may offer a ride. The offer is attached to the event container; since
+ * ordinary users can't write to that container, the save runs inside
+ * elgg_call(ELGG_IGNORE_ACCESS, ...) — the same pattern event_manager
+ * uses for event registrations. Access to the event itself is already
+ * enforced by get_entity(), and elgg_gatekeeper() requires a login.
+ */
 
-$event_guid = (int) get_input('event_guid');
-$seats = (int) get_input('seats');
-$pickup_points = get_input('pickup_points');
-$notes = get_input('notes');
+elgg_gatekeeper();
 
-\elgg_log('Event Carpool: Poging tot toevoegen van aanbieding voor event GUID ' . $event_guid, LogLevel::NOTICE);
+$event_guid    = (int) get_input('event_guid');
+$seats         = (int) get_input('seats');
+$pickup_points = trim((string) get_input('pickup_points'));
+$notes         = trim((string) get_input('notes'));
 
 $event = get_entity($event_guid);
-if (!$event || $event->getSubtype() !== 'event') {
-    \elgg_log('Event Carpool: Ongeldig evenement GUID ' . $event_guid, LogLevel::ERROR);
-    return elgg_error_response(elgg_echo('event_carpool:error:invalid_event'), [], 404);
+if (!$event instanceof \ElggEntity || $event->getSubtype() !== 'event') {
+	return elgg_error_response(elgg_echo('event_carpool:error:invalid_event'));
 }
 
-if ($seats < 1 || empty($pickup_points)) {
-    \elgg_log('Event Carpool: Ongeldige invoer voor aanbieding: seats=' . $seats . ', pickup_points=' . $pickup_points, LogLevel::ERROR);
-    return elgg_error_response(elgg_echo('event_carpool:error:invalid_input'), [], 400);
+if ($seats < 1) {
+	return elgg_error_response(elgg_echo('event_carpool:error:invalid_seats'));
 }
 
-$offer = new \ElggObject();
-$offer->setSubtype('carpool_offer'); // Gebruik setSubtype() i.p.v. magic setter
-$offer->owner_guid = elgg_get_logged_in_user_guid();
-$offer->container_guid = $event_guid;
-$offer->access_id = $event->access_id;
-$offer->seats = $seats;
-$offer->pickup_points = $pickup_points;
-$offer->notes = $notes;
-$offer->status = 'open';
+$owner_guid = elgg_get_logged_in_user_guid();
 
-try {
-    if ($offer->save()) {
-        \elgg_create_relationship($offer->guid, 'for_event', $event_guid);
-        \elgg_log('Event Carpool: Aanbieding GUID ' . $offer->guid . ' succesvol toegevoegd voor event GUID ' . $event_guid, LogLevel::NOTICE);
-        return elgg_ok_response('', elgg_echo('event_carpool:offer:success'));
-    } else {
-        \elgg_log('Event Carpool: Mislukt om aanbieding te bewaren voor event GUID ' . $event_guid, LogLevel::ERROR);
-        return elgg_error_response(elgg_echo('event_carpool:error:save_failed'), [], 500);
-    }
-} catch (Exception $e) {
-    \elgg_log('Event Carpool: Uitzondering bij toevoegen aanbieding voor event GUID ' . $event_guid . ': ' . $e->getMessage(), LogLevel::ERROR);
-    return elgg_error_response(elgg_echo('event_carpool:error:save_failed'), [], 500);
+$offer = elgg_call(ELGG_IGNORE_ACCESS, function () use ($event, $event_guid, $owner_guid, $seats, $pickup_points, $notes) {
+	$offer = new \EventCarpool\Offer();
+	$offer->container_guid = $event_guid;
+	$offer->owner_guid     = $owner_guid;
+	$offer->access_id      = ACCESS_LOGGED_IN;
+	$offer->seats          = $seats;
+	$offer->pickup_points  = $pickup_points;
+	$offer->notes          = $notes;
+
+	if (!$offer->save()) {
+		return null;
+	}
+
+	$event->addRelationship($offer->guid, 'has_carpool_offer');
+	return $offer;
+});
+
+if (!$offer instanceof \EventCarpool\Offer) {
+	return elgg_error_response(elgg_echo('event_carpool:error:save_failed'));
 }
+
+return elgg_ok_response('', elgg_echo('event_carpool:offer_saved'), $event->getURL());

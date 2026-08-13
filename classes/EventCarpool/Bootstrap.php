@@ -2,35 +2,28 @@
 namespace EventCarpool;
 
 use Elgg\DefaultPluginBootstrap;
-use Elgg\Event;
-use Psr\Log\LogLevel;
 
+/**
+ * Fixes vs. the original:
+ *  - View extension is registered in init() (conventional, no timing
+ *    doubt) instead of ready().
+ *  - Dropped the `route`,`view:object:event` handler: the route event
+ *    matches on the first URL segment, not the full route name, so it
+ *    never fired. It's also unnecessary — the carpool view reads the
+ *    event from $vars, not from the page owner (event_manager 21's event
+ *    resource does not set the event as page owner).
+ *  - Dropped the view_vars context handler for the same reason.
+ *  - No double action registration (actions live in elgg-plugin.php).
+ */
 class Bootstrap extends DefaultPluginBootstrap {
 
-    public function init() {
-        \elgg_import_esm('elgg');
-        \elgg_import_esm('jquery');
-        \elgg_import_esm('event_carpool/offers');
-        \elgg_extend_view('elgg.css', 'css/event_carpool.css');
+	public function init() {
+		// Plugin styling.
+		elgg_extend_view('elgg.css', 'css/event_carpool.css');
 
-        \elgg_register_event_handler('view_vars', 'event_manager/event/view', [$this, 'setEventContext']);
-        \elgg_extend_view('event_manager/event/view', 'event_carpool/carpool', 500); // Voeg carpool-sectie toe
-        
-        elgg_register_action('event_carpool/add_offer', elgg_get_plugins_path() . 'event_carpool/actions/event_carpool/add_offer.php', 'logged_in');
-        elgg_register_action('event_carpool/edit_offer', elgg_get_plugins_path() . 'event_carpool/actions/event_carpool/edit_offer.php', 'logged_in');
-        elgg_register_action('event_carpool/add_request', elgg_get_plugins_path() . 'event_carpool/actions/event_carpool/add_request.php', 'logged_in');
-        elgg_register_action('event_carpool/edit_request', elgg_get_plugins_path() . 'event_carpool/actions/event_carpool/edit_request.php', 'logged_in');
-
-        \elgg_log('Event Carpool: Bootstrap init called', LogLevel::INFO);
-    }
-
-    public function setEventContext(Event $event) {
-        $vars = $event->getValue();
-        $entity = elgg_extract('entity', $vars);
-
-        if ($entity && $entity->getSubtype() === 'event') {
-            \elgg_push_context('event');
-            \elgg_log('Event Carpool: Context ingesteld op "event" voor GUID ' . $entity->guid, LogLevel::INFO);
-        }
-    }
+		// Append the carpool block to the full event view. event_manager
+		// (v21) renders a single event through event_manager/event/view
+		// (see its object/event.php full-view branch).
+		elgg_extend_view('event_manager/event/view', 'event_carpool/carpool', 500);
+	}
 }
