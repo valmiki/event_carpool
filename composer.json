@@ -2,7 +2,7 @@
   "name": "valmiki/event_carpool",
   "type": "elgg-plugin",
   "description": "Adds carpool functionality to the Event Manager plugin for Elgg.",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "keywords": ["elgg", "plugin", "carpool", "event"],
   "license": "GPL-2.0-or-later",
   "authors": [

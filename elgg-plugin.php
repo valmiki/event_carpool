@@ -12,7 +12,7 @@
 return [
     'plugin' => [
         'name' => 'Event Carpool',
-        'version' => '1.0.0',
+        'version' => '2.1.1',
         'dependencies' => [
             'event_manager' => [
                 'must_be_active' => true,
