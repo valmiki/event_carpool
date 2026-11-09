@@ -1,6 +1,7 @@
 <?php
 /**
- * Carpool block, appended to event_manager/event/view.
+ * Carpool block, appended to event_manager/event/view (event_manager <= 21.1)
+ * or to event_manager/event/view/location (event_manager >= 21.2).
  *
  * The event is taken from $vars['entity'] (the base view is rendered
  * with the event in scope). Page owner is only a fallback, because
@@ -34,6 +35,7 @@ if ($location === '' && $venue === '') {
 
 $view_params = ['event_guid' => $event_guid];
 
+echo elgg_format_element('hr');
 echo elgg_format_element('div', ['class' => 'event-carpool'], implode('', [
 	elgg_view('event_carpool/add_offer', $view_params),
 	elgg_view('event_carpool/offers', $view_params),

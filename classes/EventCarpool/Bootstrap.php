@@ -21,9 +21,20 @@ class Bootstrap extends DefaultPluginBootstrap {
 		// Plugin styling.
 		elgg_extend_view('elgg.css', 'css/event_carpool.css');
 
-		// Append the carpool block to the full event view. event_manager
-		// (v21) renders a single event through event_manager/event/view
-		// (see its object/event.php full-view branch).
-		elgg_extend_view('event_manager/event/view', 'event_carpool/carpool', 500);
+		// Append the carpool block to the full event view.
+		// event_manager >= 21.2 no longer renders a single event through
+		// event_manager/event/view (object/event.php was replaced by
+		// object/event/full.php, which composes the subviews directly), so
+		// an extension on that view is never executed. The subview
+		// event_manager/event/view/location exists in 21.1 and 21.2 and is
+		// rendered by both full views; extensions are rendered even when the
+		// base view returns early because there are no location details.
+		if (elgg_view_exists('object/event/full')) {
+			// event_manager >= 21.2
+			elgg_extend_view('event_manager/event/view/location', 'event_carpool/carpool', 500);
+		} else {
+			// event_manager <= 21.1
+			elgg_extend_view('event_manager/event/view', 'event_carpool/carpool', 500);
+		}
 	}
 }
